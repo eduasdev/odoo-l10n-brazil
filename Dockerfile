@@ -70,9 +70,17 @@ COPY --from=addons-fetch /addons /mnt/br-addons
 # want a newer version than the one apt/dpkg already put in site-packages;
 # pip can't "uninstall" a dpkg-owned package (no RECORD file), so without
 # this flag it aborts instead of just shadowing it with the newer version.
+#
+# pyopenssl is explicitly included here to prevent a version mismatch:
+# if OCA requirements pull in a newer `cryptography` (which dropped the
+# cffi `_lib.GEN_EMAIL` attribute in favour of Rust bindings), the system
+# apt-installed pyopenssl still references that old cffi API and crashes
+# Odoo on startup. Upgrading pyopenssl alongside cryptography keeps both
+# packages on a compatible pair.
 COPY --from=addons-fetch /build/requirements.txt /tmp/requirements.txt
 
 RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
- -r /tmp/requirements.txt && rm -f /tmp/requirements.txt
+ -r /tmp/requirements.txt pyopenssl \
+ && rm -f /tmp/requirements.txt
 
 USER odoo
