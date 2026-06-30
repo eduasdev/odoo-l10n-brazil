@@ -1,0 +1,58 @@
+[options]
+; This is the password that allows database operations
+; admin_passwd = admin
+
+; This is for DB connection (Preferebly set by using environment
+; variables)
+; db_host = db
+; db_port = 5432
+; db_user = odoo
+; db_password = odoo
+
+default_productivity_apps = True
+
+; ==============================================================
+; Custom Odoo 18.0 config
+; ==============================================================
+
+; Data directory
+data_dir = /var/lib/odoo
+
+; Add OCA Brazilian Localization addons baked into the image under
+; /mnt/br-addons.
+addons_path = /mnt/extra-addons,/mnt/br-addons
+
+; Per-worker DB connection cap.
+db_maxconn = 32
+
+; Restrict the instance to a single DB (recommended for production).
+; For the very first boot, leave commented out so you can create
+; the database from the web UI, then uncomment and redeploy.
+; dbfilter = ^odoo$
+; db_name = odoo
+
+; Keep the DB manager reachable on first boot; set to False once
+; the DB exists.
+list_db = True
+
+; REQUIRED so Odoo trusts X-Forwarded-* headers behind proxies.
+proxy_mode = True
+
+; workers > 0 = multiprocessing. With workers > 0 the live-chat
+; runs on port 8072 under /websocket route.
+workers = 5
+max_cron_threads = 1
+
+; Per-worker memory ceilings in bytes. 2147483648 = 2.0 GB soft,
+; 3221225472 = 3.0 GB hard.
+limit_memory_soft = 2147483648
+limit_memory_hard = 3221225472
+
+; Request time/size limits
+limit_time_cpu = 60
+limit_time_real = 120
+limit_time_real_cron = 300
+limit_request = 8192
+
+; Logging level configuration
+log_level = info

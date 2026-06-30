@@ -1,0 +1,15 @@
+# Real odoo.conf contains admin_passwd - never commit it.
+# A sanitized template lives in odoo.conf.example; the real file is
+# deployed via Dokploy's Advanced -> Mounts -> File Mount feature instead.
+odoo.conf
+
+# Local env files (if you ever create one for `docker compose` testing)
+.env
+*.env.local
+
+# Python bytecode caches pulled in by the build/dep-check scripts
+__pycache__/
+*.pyc
+
+# OS/editor noise
+.DS_Store
