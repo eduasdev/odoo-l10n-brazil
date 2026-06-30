@@ -63,20 +63,23 @@ USER root
 # Bake the extra addons into the image (no separate addons volume needed).
 COPY --from=addons-fetch /addons /mnt/br-addons
 
+# Remove the apt-installed pyopenssl before running pip. Without this step
+# pip installs the upgraded pyopenssl to /usr/local/lib/python3.x/dist-packages/
+# but Python's path resolution still finds the old apt copy first at
+# /usr/lib/python3/dist-packages/OpenSSL/, causing the GEN_EMAIL crash.
+# dpkg --purge removes only the pyopenssl files with no cascade side-effects;
+# the || true makes the step a no-op if the package isn't present.
+RUN dpkg --purge python3-openssl 2>/dev/null || true
+
 # External (python) dependencies declared by the modules above, installed
-# via pip. PEP 668 ("externally managed environment") on the Ubuntu Noble
+# via pip. PEP 668 ("externally managed environment") on the Debian Bookworm
 # base requires --break-system-packages. --ignore-installed is also needed
 # because some requirements (e.g. typing_extensions, pulled in transitively)
 # want a newer version than the one apt/dpkg already put in site-packages;
 # pip can't "uninstall" a dpkg-owned package (no RECORD file), so without
 # this flag it aborts instead of just shadowing it with the newer version.
-#
-# pyopenssl is explicitly included here to prevent a version mismatch:
-# if OCA requirements pull in a newer `cryptography` (which dropped the
-# cffi `_lib.GEN_EMAIL` attribute in favour of Rust bindings), the system
-# apt-installed pyopenssl still references that old cffi API and crashes
-# Odoo on startup. Upgrading pyopenssl alongside cryptography keeps both
-# packages on a compatible pair.
+# pyopenssl is listed explicitly to keep it in sync with whatever version of
+# cryptography the OCA requirements install.
 COPY --from=addons-fetch /build/requirements.txt /tmp/requirements.txt
 
 RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
