@@ -1,20 +1,14 @@
-# Odoo L10n Brazil
+# Odoo 18.0 + OCA Brazilian Localization
 
-Docker build for Odoo 18.0 bundled with the [OCA Brazilian Localization](https://github.com/OCA/l10n-brazil) addons and their module/Python dependencies, ready to deploy via Dokploy or plain `docker compose`.
-
-## Prerequisites
-
-- Docker with Buildx (multi-stage build support).
-- A Postgres-backed Odoo deployment target (Dokploy, or `docker compose` for local testing).
-- A Docker Hub account if you want to push your own image (used by the included CI workflow).
+Docker build for Odoo 18.0 bundled with the [OCA Brazilian Localization](https://github.com/OCA/l10n-brazil) addons and their module/python dependencies, ready to deploy via `docker compose`.
 
 ## How it works
 
 `Dockerfile` is a 3-stage build:
 
 1. **`addons-fetch`** — clones the pinned OCA repos (`l10n-brazil` plus the specific modules it depends on from `account-payment`, `bank-payment`, `currency`, `hr`, `mis-builder`, `product-attribute`, `reporting-engine`, `sale-workflow`, and `server-ux`) for the `18.0` branch, flattens them into `/addons`, and aggregates any `requirements.txt` files it finds along the way.
-2. **`deps-verification`** (dev-only, not built by default) — copies the fetched addons into an `odoo:18.0` image and runs `scripts/verify_deps.py`, which checks that every module's *internal* (Odoo module) dependencies are actually present among the addons being fetched. See [Dependency checks](#dependency-checks-stage-2) below.
-3. **Final stage** — bakes the addons into `odoo:18.0` and installs the aggregated Python `requirements.txt`. This is what a plain `docker build .` produces.
+2. **`deps-verification`** (dev-only, not built by default) — copies the fetched addons into an `odoo:18.0` image and runs `scripts/verify_deps.py`, which checks that every fetched OCA module's `depends` list is actually satisfied by another core module/addon in the build. See [Dependency checks](#dependency-checks-stage-2) below.
+3. **Final stage** — bakes the addons into `odoo:18.0` and installs the aggregated python `requirements.txt`. This is what a plain `docker build .` produces.
 
 ## Setup
 
@@ -22,7 +16,7 @@ Build and run locally with Compose:
 
 ```bash
 cp odoo.conf.example odoo.conf
-# edit odoo.conf, then mount it where docker-compose.yaml expects it (../files/odoo.conf)
+# edit odoo.conf, then mount it where docker-compose.yaml expects it
 docker compose up -d
 ```
 
@@ -34,7 +28,7 @@ docker build -t odoo-l10n-brazil:18.0 .
 
 ## Dependency checks (Stage 2)
 
-A normal `docker build .` skips Stage 2 entirely — it only ever builds Stage 1 (fetch) and the final stage. Stage 2 exists purely so you can verify, *before* deploying, that every fetched OCA module's `depends` list is actually satisfied by another addon in the build. An unmet dependency doesn't fail anything at build time; it just makes the module show up as "Not Installable" in Odoo's Apps list later, with no obvious explanation.
+A normal `docker build .` skips Stage 2 entirely — it only ever builds Stage 1 (fetch) and the final stage. Stage 2 exists purely so you can verify, *before* deploying, that every fetched OCA module's `depends` list is actually satisfied by another core module/addon in the build. An unmet dependency doesn't fail anything at build time; it just makes the module show up as "Not Installable" in Odoo's Apps list later, with no obvious explanation.
 
 To run the check, build Stage 2 explicitly by name:
 
