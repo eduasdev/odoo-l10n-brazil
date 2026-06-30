@@ -63,16 +63,13 @@ USER root
 # Bake the extra addons into the image (no separate addons volume needed).
 COPY --from=addons-fetch /addons /mnt/br-addons
 
-RUN find /usr -type d -name "OpenSSL" -path "*/dist-packages/OpenSSL" \
-      -exec rm -rf {} + 2>/dev/null; \
-    find /usr -type d \( -name "pyOpenSSL*.dist-info" -o -name "pyOpenSSL*.egg-info" \) \
-      -exec rm -rf {} + 2>/dev/null; \
-    true
-
 COPY --from=addons-fetch /build/requirements.txt /tmp/requirements.txt
 
 RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
-      -r /tmp/requirements.txt pyopenssl \
+      -r /tmp/requirements.txt \
     && rm -f /tmp/requirements.txt
+
+RUN pip3 install --no-cache-dir --ignore-installed --no-deps \
+      --target=/usr/lib/python3/dist-packages "pyopenssl>=24.0.0"
 
 USER odoo
