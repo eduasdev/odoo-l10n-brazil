@@ -23,6 +23,7 @@ on:
     paths:
       - "Dockerfile"
       - "scripts/**"
+  workflow_dispatch:
 
 env:
   IMAGE: docker.io/eduasdev/odoo-l10n-brazil
