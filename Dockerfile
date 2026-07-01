@@ -57,9 +57,13 @@ FROM odoo:18.0
 
 USER root
 
-# Courier .pfb metrics required by wkhtmltopdf for PDF rendering.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      fonts-urw-base35 \
+# wkhtmltopdf's Qt PDF engine looks for "Courier.pfb" by name; gsfonts
+# provides the Courier equivalent as n022003l.pfb (Nimbus Mono), so we
+# symlink it under the expected name and rebuild the font cache.
+RUN apt-get update && apt-get install -y --no-install-recommends gsfonts \
+    && ln -s /usr/share/fonts/type1/gsfonts/n022003l.pfb \
+             /usr/share/fonts/type1/gsfonts/Courier.pfb \
+    && fc-cache -f \
     && rm -rf /var/lib/apt/lists/*
 
 # Bake the extra addons into the image (no separate addons volume needed).
