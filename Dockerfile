@@ -1,7 +1,6 @@
 ##########################################################################################
 # Stage 1: fetch + flatten addons
 ##########################################################################################
-
 FROM alpine/git:2.54.0 AS addons-fetch
 
 # Copy the fetch_addon_mod.sh script and make it executable
@@ -44,7 +43,6 @@ RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/server-ux \
 # Never built by default - Used to run after build to verify that all module dependencies
 # are satisfied.
 ##########################################################################################
-
 FROM odoo:18.0 AS deps-verification
 
 COPY --from=addons-fetch /addons /mnt/br-addons
@@ -55,7 +53,6 @@ RUN python3 /verify_deps.py
 ##########################################################################################
 # Stage 3: Odoo 18.0 + OCA Brazilian Localization
 ##########################################################################################
-
 FROM odoo:18.0
 
 USER root
@@ -71,5 +68,9 @@ RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
 
 RUN pip3 install --no-cache-dir --ignore-installed --no-deps \
       --target=/usr/lib/python3/dist-packages "pyopenssl>=24.0.0"
+
+# Diagnostic: emits pyopenssl version + path into the build log so we can
+# confirm the fix actually ran in the image. Remove once resolved.
+RUN python3 -c "import OpenSSL; print('[diag] pyopenssl', OpenSSL.__version__, 'at', OpenSSL.__file__)"
 
 USER odoo
