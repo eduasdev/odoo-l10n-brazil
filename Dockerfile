@@ -57,6 +57,11 @@ FROM odoo:18.0
 
 USER root
 
+# Courier .pfb metrics required by wkhtmltopdf for PDF rendering.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      gsfonts \
+    && rm -rf /var/lib/apt/lists/*
+
 # Bake the extra addons into the image (no separate addons volume needed).
 COPY --from=addons-fetch /addons /mnt/br-addons
 
@@ -68,9 +73,5 @@ RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
 
 RUN pip3 install --no-cache-dir --ignore-installed --no-deps --upgrade \
       --target=/usr/lib/python3/dist-packages "pyopenssl>=24.0.0"
-
-# Diagnostic: emits pyopenssl version + path into the build log so we can
-# confirm the fix actually ran in the image. Remove once resolved.
-RUN python3 -c "import OpenSSL; print('[diag] pyopenssl', OpenSSL.__version__, 'at', OpenSSL.__file__)"
 
 USER odoo
