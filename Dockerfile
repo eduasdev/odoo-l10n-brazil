@@ -59,7 +59,7 @@ USER root
 
 # Courier .pfb metrics required by wkhtmltopdf for PDF rendering.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      gsfonts \
+      fonts-urw-base35 \
     && rm -rf /var/lib/apt/lists/*
 
 # Bake the extra addons into the image (no separate addons volume needed).
