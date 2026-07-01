@@ -66,7 +66,7 @@ RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
       -r /tmp/requirements.txt \
     && rm -f /tmp/requirements.txt
 
-RUN pip3 install --no-cache-dir --ignore-installed --no-deps \
+RUN pip3 install --no-cache-dir --ignore-installed --no-deps --upgrade \
       --target=/usr/lib/python3/dist-packages "pyopenssl>=24.0.0"
 
 # Diagnostic: emits pyopenssl version + path into the build log so we can
