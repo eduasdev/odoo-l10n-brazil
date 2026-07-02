@@ -6,10 +6,9 @@ services:
         condition: service_healthy   # fixes the first-boot DB race
     environment:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
-      - HOST=odoo-db
-      - DATABASE=${POSTGRES_DB:-odoo}
       - USER=${POSTGRES_USER:-odoo}
       - PASSWORD=${POSTGRES_PASSWORD:-odoo}
+      - HOST=odoo-db
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ../files/odoo.conf:/etc/odoo/odoo.conf:ro
