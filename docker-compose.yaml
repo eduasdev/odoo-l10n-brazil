@@ -1,19 +1,19 @@
 services:
-  odoo:
+  odoo-web:
     image: docker.io/eduasdev/odoo-l10n-brazil:18.0
     depends_on:
-      db:
+      odoo-db:
         condition: service_healthy   # fixes the first-boot DB race
     environment:
-      - HOST=db
-      - USER=odoo
+      - HOST=odoo-db
+      - USER=${ODOO_DB_USER}
       - PASSWORD=${ODOO_DB_PASSWORD}
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ../files/odoo.conf:/etc/odoo/odoo.conf:ro
     restart: unless-stopped
 
-  db:
+  odoo-db:
     image: postgres:17
     # Postgres tuning parameters
     # command: >
@@ -25,14 +25,14 @@ services:
     #   -c max_connections=64
     #   -c synchronous_commit=off
     environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=odoo
+      - POSTGRES_DB=${ODOO_DB_NAME}
+      - POSTGRES_USER=${ODOO_DB_USER}
       - POSTGRES_PASSWORD=${ODOO_DB_PASSWORD}
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - odoo-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "odoo", "-d", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "${ODOO_DB_USER}", "-d", "${ODOO_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 10
