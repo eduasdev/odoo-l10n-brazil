@@ -1,10 +1,11 @@
 [options]
-; This is the password that allows database operations
+; This is the password that allows database operations (Preferebly
+; set by using environment variables)
 ; admin_passwd = admin
 
 ; This is for DB connection (Preferebly set by using environment
 ; variables)
-; db_host = db
+; db_host = odoo-db
 ; db_port = 5432
 ; db_user = odoo
 ; db_password = odoo
