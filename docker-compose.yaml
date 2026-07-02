@@ -5,11 +5,11 @@ services:
       odoo-db:
         condition: service_healthy   # fixes the first-boot DB race
     environment:
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       - HOST=odoo-db
-      - DATABASE=${POSTGRES_DB}
-      - USER=${POSTGRES_USER}
-      - PASSWORD=${POSTGRES_PASSWORD}
+      - DATABASE=${POSTGRES_DB:-odoo}
+      - USER=${POSTGRES_USER:-odoo}
+      - PASSWORD=${POSTGRES_PASSWORD:-odoo}
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ../files/odoo.conf:/etc/odoo/odoo.conf:ro
@@ -18,18 +18,18 @@ services:
   odoo-db:
     image: postgres:17
     # Postgres tuning parameters
-    # command: >
-    #   postgres
-    #   -c shared_buffers=2GB
-    #   -c effective_cache_size=8GB
-    #   -c work_mem=32MB
-    #   -c maintenance_work_mem=512MB
-    #   -c max_connections=64
-    #   -c synchronous_commit=off
+    command: >
+      postgres
+      -c shared_buffers=${PG_SHARED_BUFFERS:-128MB}
+      -c effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-4GB}
+      -c work_mem=${PG_WORK_MEM:-4MB}
+      -c maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-64MB}
+      -c max_connections=${PG_MAX_CONNECTIONS:-100}
+      -c synchronous_commit=${PG_SYNCHRONOUS_COMMIT:-on}
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-odoo}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo}
+      - POSTGRES_DB=${POSTGRES_DB:-odoo}
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - odoo-db-data:/var/lib/postgresql/data
