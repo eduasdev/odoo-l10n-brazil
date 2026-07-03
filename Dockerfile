@@ -43,6 +43,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Python dependencies declared by the fetched modules.
+# --break-system-packages is required on Ubuntu Noble (PEP 668, pip >= 23) but
+# not available on older Ubuntu releases — detect at build time to stay generic.
 # --ignore-installed: allows pip to shadow dpkg-owned packages with newer versions.
 COPY --from=addons-fetch /build/requirements.txt /tmp/requirements.txt
 RUN if pip3 --help 2>&1 | grep -q break-system-packages; then \

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build-time sanity check, run inside the modified odoo:18 image (addons
+"""Build-time sanity check, run inside the modified odoo image (addons
 included).
 
 Parses every module copied into /mnt/br-addons and warns (does not fail
