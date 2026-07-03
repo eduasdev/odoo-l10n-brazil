@@ -1,28 +1,20 @@
 ##########################################################################################
 # Stage 1: fetch + flatten addons
 ##########################################################################################
-
-# Global ARG — available in all FROM lines. "invalid" silences the Docker parser
-# warning and ensures the build fails immediately if --build-arg ODOO_VERSION=x.y
-# is not passed instead of pulling a nonsensical image name.
-ARG ODOO_VERSION=invalid
-
 FROM alpine/git:2.54.0 AS addons-fetch
 
-ARG ODOO_VERSION
 
 COPY scripts/fetch_from_lockfile.sh /usr/local/bin/fetch_from_lockfile.sh
 RUN chmod +x /usr/local/bin/fetch_from_lockfile.sh
 
 COPY modules.lock /modules.lock
-RUN /usr/local/bin/fetch_from_lockfile.sh "$ODOO_VERSION" /modules.lock
+RUN /usr/local/bin/fetch_from_lockfile.sh 17.0 /modules.lock
 
 ##########################################################################################
 # Stage 2 (dev-only, testing phase): internal dependency check
 # Never built by default — run after build to verify all module dependencies are satisfied
 ##########################################################################################
-
-FROM odoo:${ODOO_VERSION} AS deps-verification
+FROM odoo:17.0 AS deps-verification
 
 COPY --from=addons-fetch /addons /mnt/br-addons
 COPY scripts/verify_deps.py /verify_deps.py
@@ -31,8 +23,7 @@ RUN python3 /verify_deps.py
 ##########################################################################################
 # Stage 3: final image
 ##########################################################################################
-
-FROM odoo:${ODOO_VERSION}
+FROM odoo:17.0
 
 USER root
 
@@ -45,23 +36,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Python dependencies declared by the fetched modules.
-# --break-system-packages is required when the EXTERNALLY-MANAGED marker file is
-# present (Ubuntu Noble / PEP 668). We detect it via the file rather than pip --help
-# since some pip builds enforce PEP 668 without advertising the flag in help text.
 # --ignore-installed: allows pip to shadow dpkg-owned packages with newer versions.
 COPY --from=addons-fetch /build/requirements.txt /tmp/requirements.txt
-RUN if find /usr/lib/python3* -maxdepth 1 -name EXTERNALLY-MANAGED 2>/dev/null | grep -q .; then \
-      pip3 install --no-cache-dir --ignore-installed --break-system-packages \
-        -r /tmp/requirements.txt; \
-    else \
-      pip3 install --no-cache-dir --ignore-installed \
-        -r /tmp/requirements.txt; \
-    fi \
+RUN pip3 install --no-cache-dir --ignore-installed \
+      -r /tmp/requirements.txt \
     && rm -f /tmp/requirements.txt
 
-# Force a newer pyOpenSSL over the distro-packaged one to satisfy cryptography
-# version constraints pulled in transitively by some OCA modules
-RUN pip3 install --no-cache-dir --ignore-installed --no-deps --upgrade \
+# Compatibility fixes for packages upgraded by OCA requirements:
+#   - lxml >= 5.0 split lxml.html.clean into a separate project
+#   - pyopenssl < 24.0.0 is incompatible with cryptography >= 42
+RUN pip3 install --no-cache-dir lxml_html_clean \
+    && pip3 install --no-cache-dir --ignore-installed --no-deps --upgrade \
       --target=/usr/lib/python3/dist-packages "pyopenssl>=24.0.0"
 
 USER odoo
