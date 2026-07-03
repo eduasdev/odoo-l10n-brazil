@@ -43,7 +43,7 @@ def main():
     available |= oca_modules
 
     if not oca_modules:
-        print(f"[dep-check] No addons found under {ADDONS_DIR}, skipping check.")
+        print(f"[deps-verification] No addons found under {ADDONS_DIR}, skipping check.")
         return
 
     unresolved = []
@@ -61,16 +61,16 @@ def main():
                 unresolved.append((mod, dep))
 
     if unparsed:
-        print(f"[dep-check] {len(unparsed)} manifest(s) could not be parsed (skipped):")
+        print(f"[deps-verification] {len(unparsed)} manifest(s) could not be parsed (skipped):")
         for mod, exc in unparsed:
             print(f"  - {mod}: {exc}")
 
     if unresolved:
-        print(f"[dep-check] WARNING: {len(unresolved)} module(s) have unmet dependencies (will show as 'Not Installable'):")
+        print(f"[deps-verification] MISSING: {len(unresolved)} module(s) have unmet dependencies (will show as 'Not Installable'):")
         for mod, dep in unresolved:
             print(f"  - {mod} -> requires '{dep}'")
     else:
-        print(f"[dep-check] OK: all {len(oca_modules)} module(s) have satisfied dependencies.")
+        print(f"[deps-verification] OK: all {len(oca_modules)} module(s) have satisfied dependencies.")
 
 
 if __name__ == "__main__":

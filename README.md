@@ -1,63 +1,172 @@
-# Odoo 17.0 + OCA Brazilian Localization
+# Odoo + OCA Brazilian Localization
 
-Docker build for Odoo 17.0 bundled with the [OCA Brazilian Localization](https://github.com/OCA/l10n-brazil) addons and their internal/external dependencies, ready to deploy via `docker compose`.
+Docker image bundling [Odoo](https://hub.docker.com/_/odoo) with the [OCA Brazilian Localization](https://github.com/OCA/l10n-brazil) addons and their dependencies, ready to deploy via `docker compose`.
+
+Each supported Odoo major version lives on its own branch (`17.0`, `18.0`, etc.), mirroring OCA's own branching convention. The branch you are on determines what gets built.
+
+---
 
 ## How it works
 
-`Dockerfile` is a 3-stage build:
+The build is a 3-stage Dockerfile:
 
-1. **`addons-fetch`** — clones the pinned OCA repos (`l10n-brazil` plus the specific modules it depends on from `account-payment`, `bank-payment`, `currency`, `hr`, `mis-builder`, `product-attribute`, `reporting-engine`, `sale-workflow`, and `server-ux`) for the `17.0` branch, flattens them into `/addons`, and aggregates any `requirements.txt` files it finds along the way.
-2. **`deps-verification`** (dev-only, not built by default) — copies the fetched addons into an `odoo:17.0` image and runs `scripts/verify_deps.py`, which checks that every fetched OCA module's `depends` list is actually satisfied by a core module or addon present in the build. See [Dependency checks](#dependency-checks-stage-2) below.
-3. **Final stage** — bakes the addons into `odoo:17.0` and installs the aggregated python `requirements.txt`. This is what a plain `docker build .` produces.
+**Stage 1 — `addons-fetch`**
+Clones every OCA repo listed in `modules.lock` at the pinned commit SHA, copies the specified modules into `/addons`, and aggregates all `requirements.txt` files it finds into a single `/build/requirements.txt`.
 
-## Setup
+**Stage 2 — `deps-verification`** *(dev-only, not built by default)*
+Installs the fetched addons into a real Odoo image and runs `scripts/verify_deps.py`, which checks that every module's `depends` list is satisfied. See [Dependency verification](#dependency-verification-stage-2) below.
 
-Build and run locally with Compose:
+**Stage 3 — final image**
+Bakes the addons into the Odoo base image and installs the aggregated Python dependencies. This is what a plain `docker build` produces.
 
-```bash
+---
+
+## modules.lock
+
+`modules.lock` is the single file that differs between branches. It pins every OCA repo to an exact commit SHA, making builds fully reproducible — the same `modules.lock` always produces the same image, regardless of what changed upstream.
+
+**Format:**
+```
+# repo                    sha                               modules (* = all addons)
+oca/l10n-brazil           a3f82c1d4e5f67890abc123def456789  *
+oca/account-payment       d91e4b72c3d4e5f6a1b2c3d4e5f6a1b2  account_due_list account_due_list_payment_mode
+oca/bank-payment          c04a1128d2e3f4a5b6c7d8e9f0a1b2c3  account_payment_order account_payment_partner
+```
+
+- Lines starting with `#` are comments and are ignored.
+- A `*` in the modules column (or omitting it entirely) copies all Odoo addons found in the repo root.
+- Listing specific module names copies only those folders.
+
+**To update a dependency** to a newer upstream commit:
+
+```sh
+# Get the current HEAD SHA of a branch
+git ls-remote https://github.com/oca/l10n-brazil.git refs/heads/18.0
+
+# Update the SHA in modules.lock, then commit
+# The CI/CD pipeline will trigger automatically on the next push
+```
+
+---
+
+## Deploying with Docker Compose
+
+Copy the example files, fill in your credentials, and start the stack:
+
+```sh
+cp .env.example .env
+# edit .env: set ODOO_VERSION, POSTGRES_USER, POSTGRES_PASSWORD
 cp odoo.conf.example odoo.conf
-# edit odoo.conf, then mount it where docker-compose.yaml expects it
+# edit odoo.conf: set admin_passwd, db credentials, workers, etc.
+
 docker compose up -d
 ```
 
-Or build the final image directly:
+`odoo.conf` and `.env` are `.gitignore`d — never commit either with real credentials.
 
-```bash
-docker build -t odoo-l10n-brazil:17.0 .
+## Configuration reference
+
+`odoo.conf.example` documents all supported options: addons path, database credentials, worker counts, memory limits, request timeouts, and more. Copy it to `odoo.conf`, fill in your values, and mount it at deploy time.
+
+---
+
+## Building locally
+
+Use the current git branch as the Odoo version:
+
+```sh
+docker build \
+  --build-arg ODOO_VERSION=$(git branch --show-current) \
+  -t odoo-l10n-brazil:$(git branch --show-current) \
+  .
 ```
 
-## Dependency checks (Stage 2)
+To see full build output (useful for debugging fetch/install steps):
 
-A normal `docker build .` skips Stage 2 entirely — it only ever builds Stage 1 (fetch) and the final stage. Stage 2 exists purely so you can verify, before deploying, that every fetched OCA module's `depends` list is actually satisfied by a core module or addon present in the build. An unmet dependency doesn't fail anything at build time; it just makes the module show up as "Not Installable" in Odoo's Apps list later, with no obvious explanation.
-
-To run the check, build Stage 2 explicitly by name:
-
-```bash
-docker build --progress=plain --target deps-verification -t odoo-l10n-brazil:depcheck .
+```sh
+docker build \
+  --progress=plain \
+  --build-arg ODOO_VERSION=$(git branch --show-current) \
+  -t odoo-l10n-brazil:$(git branch --show-current) \
+  .
 ```
 
-This re-runs Stage 1 (fetch) and then Stage 2. The check itself (`scripts/verify_deps.py`) executes as a `RUN` step, so its output prints straight into the build log — either:
+To force a clean build ignoring all layer cache (e.g. after updating `modules.lock`):
+
+```sh
+docker build \
+  --progress=plain \
+  --no-cache \
+  --build-arg ODOO_VERSION=$(git branch --show-current) \
+  -t odoo-l10n-brazil:$(git branch --show-current) \
+  .
+```
+
+---
+
+## Dependency verification (Stage 2)
+
+An unmet module dependency doesn't fail the build — it just makes the module appear as "Not Installable" in Odoo's Apps list with no obvious explanation. Stage 2 exists to catch this before deploying.
+
+A normal `docker build` skips Stage 2 entirely. To run it explicitly:
+
+```sh
+docker build \
+  --progress=plain \
+  --target deps-verification \
+  --build-arg ODOO_VERSION=$(git branch --show-current) \
+  -t odoo-l10n-brazil:deps-verification \
+  .
+```
+
+The check runs as a `RUN` step inside the build, so the result prints directly into the build log — no container needs to start. Output is either:
 
 ```
-[dep-check] OK: all N module(s) have satisfied dependencies.
+[deps-verification] OK: all N module(s) have satisfied dependencies.
 ```
 
-or a list of `module -> requires 'missing_dependency'` lines to investigate. No container needs to be run afterward; the build log is the result. If you've changed the module list in the Dockerfile and want a clean re-fetch + re-check (bypassing layer cache), add `--no-cache`:
+or a list of unsatisfied dependencies to investigate:
 
-```bash
-docker build --progress=plain --no-cache --target deps-verification -t odoo-l10n-brazil:depcheck .
+```
+[deps-verification] MISSING: sale_invoice_plan requires 'account_payment_order'
 ```
 
-## Configuration
+To bypass the layer cache and force a full re-fetch before checking:
 
-`odoo.conf.example` documents the supported options (addons path, worker counts, memory limits, request limits, etc.). Copy it to `odoo.conf`, fill in `admin_passwd` and DB credentials, and mount it at deploy time. `odoo.conf` itself is `.gitignore`d on purpose — never commit a real one.
+```sh
+docker build \
+  --progress=plain \
+  --no-cache \
+  --target deps-verification \
+  --build-arg ODOO_VERSION=$(git branch --show-current) \
+  -t odoo-l10n-brazil:deps-verification \
+  .
+```
+
+---
 
 ## CI/CD
 
-`.github/workflows/docker-build.yml` builds and pushes the image to Docker Hub on every push to a `*.0` branch (e.g. `17.0`, `19.0`), tagging it with the branch name plus a SHA-suffixed tag. It needs the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repo secrets.
+`.github/workflows/docker-build.yml` builds a multi-arch image (amd64 + arm64) and pushes it to Docker Hub on every push to a `*.0` branch, but only when files that affect the image actually change (`Dockerfile`, `scripts/**`, `modules.lock`). It tags the image with the branch name and a SHA-suffixed immutable tag:
 
-The `DOKPLOY_*` secrets are optional. They are meant for those using Dokploy and, if set, trigger a Dokploy redeploy after the image is pushed.
+```
+eduasdev/odoo-l10n-brazil:18.0
+eduasdev/odoo-l10n-brazil:18.0-abc1234
+```
+
+The floating tag (`18.0`) always points to the latest build. The SHA-suffixed tag is pinned forever and can be used to roll back to a previous image without rebuilding.
+
+The workflow can also be triggered manually from the Actions tab via **Run workflow**.
+
+**Required secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | `eduasdev` |
+| `DOCKERHUB_TOKEN` | Docker Hub access token (not your account password) |
+
+---
 
 ## License
 
-MIT — see [LICENSE](LICENSE). This license covers the build tooling in this repository (Dockerfile, scripts, Compose file) only. The bundled OCA addons are fetched at build time, not committed to this repo, and keep their own upstream licenses (mostly AGPL-3/LGPL-3 — check each module's `__manifest__.py` for specifics).
+MIT — see [LICENSE](LICENSE). This covers the build tooling in this repository (Dockerfile, scripts, Compose file) only. The OCA addons are fetched at build time and are not committed here — they carry their own upstream licenses (mostly AGPL-3/LGPL-3; check each module's `__manifest__.py` for specifics).
