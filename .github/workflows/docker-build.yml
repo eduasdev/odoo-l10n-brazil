@@ -15,7 +15,7 @@ name: Build and push odoo-l10n-brazil
 
 on:
   push:
-    branches: ["*.0"]  # 18.0, 19.0, etc.
+    branches: ["*.0"]  # 17.0, 18.0, etc.
     paths:
       - "Dockerfile"
       - "scripts/**"
