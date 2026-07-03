@@ -14,7 +14,7 @@ The build is a 3-stage Dockerfile:
 Clones every OCA repo listed in `modules.lock` at the pinned commit SHA, copies the specified modules into `/addons`, and aggregates all `requirements.txt` files it finds into a single `/build/requirements.txt`.
 
 **Stage 2 — `deps-verification`** *(dev-only, not built by default)*
-Installs the fetched addons into a real Odoo image and runs `scripts/verify_dependencies.py`, which checks that every module's `depends` list is satisfied. See [Dependency verification](#dependency-verification-stage-2) below.
+Installs the fetched addons into a real Odoo image and runs `scripts/verify_deps.py`, which checks that every module's `depends` list is satisfied. See [Dependency verification](#dependency-verification-stage-2) below.
 
 **Stage 3 — final image**
 Bakes the addons into the Odoo base image and installs the aggregated Python dependencies. This is what a plain `docker build` produces.

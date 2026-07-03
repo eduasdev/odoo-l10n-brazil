@@ -66,7 +66,7 @@ def main():
             print(f"  - {mod}: {exc}")
 
     if unresolved:
-        print(f"[deps-verification] WARNING: {len(unresolved)} module(s) have unmet dependencies (will show as 'Not Installable'):")
+        print(f"[deps-verification] MISSING: {len(unresolved)} module(s) have unmet dependencies (will show as 'Not Installable'):")
         for mod, dep in unresolved:
             print(f"  - {mod} -> requires '{dep}'")
     else:
