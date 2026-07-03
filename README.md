@@ -33,7 +33,7 @@ A normal `docker build .` skips Stage 2 entirely — it only ever builds Stage 1
 To run the check, build Stage 2 explicitly by name:
 
 ```bash
-docker build --target deps-verification -t odoo-l10n-brazil:depcheck .
+docker build --progress=plain --target deps-verification -t odoo-l10n-brazil:depcheck .
 ```
 
 This re-runs Stage 1 (fetch) and then Stage 2. The check itself (`scripts/verify_deps.py`) executes as a `RUN` step, so its output prints straight into the build log — either:
@@ -45,7 +45,7 @@ This re-runs Stage 1 (fetch) and then Stage 2. The check itself (`scripts/verify
 or a list of `module -> requires 'missing_dependency'` lines to investigate. No container needs to be run afterward; the build log is the result. If you've changed the module list in the Dockerfile and want a clean re-fetch + re-check (bypassing layer cache), add `--no-cache`:
 
 ```bash
-docker build --no-cache --target deps-verification -t odoo-l10n-brazil:depcheck .
+docker build --progress=plain --no-cache --target deps-verification -t odoo-l10n-brazil:depcheck .
 ```
 
 ## Configuration
