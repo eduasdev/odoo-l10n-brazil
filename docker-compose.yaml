@@ -1,6 +1,6 @@
 services:
   odoo-web:
-    image: docker.io/eduasdev/odoo-l10n-brazil:18.0
+    image: docker.io/eduasdev/odoo-l10n-brazil:17.0
     depends_on:
       odoo-db:
         condition: service_healthy   # fixes the first-boot DB race

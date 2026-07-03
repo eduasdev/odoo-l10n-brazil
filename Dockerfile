@@ -7,43 +7,46 @@ FROM alpine/git:2.54.0 AS addons-fetch
 COPY scripts/fetch_addon_mod.sh /usr/local/bin/fetch_addon_mod.sh
 RUN chmod +x /usr/local/bin/fetch_addon_mod.sh
 
-# Fetch OCA Brazilian Localization modules for Odoo 18.0
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/l10n-brazil
+# Fetch OCA Brazilian Localization modules for Odoo 17.0
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/l10n-brazil
 
-# Fetch OCA Brazilian Localization module dependencies for Odoo 18.0
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/account-payment \
+# Fetch OCA Brazilian Localization module dependencies for Odoo 17.0
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/account-payment \
       account_due_list account_due_list_payment_mode
 
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/bank-payment \
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/bank-payment \
       account_payment_order account_payment_partner account_payment_mode
 
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/currency \
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/currency \
       currency_rate_update
 
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/hr \
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/hr \
       hr_employee_relative
 
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/mis-builder \
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/mis-builder \
       mis_builder
 
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/product-attribute \
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/product-attribute \
       uom_alias
 
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/reporting-engine \
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/reporting-engine \
       report_xlsx
 
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/sale-workflow \
-      sale_invoice_plan
-
-RUN /usr/local/bin/fetch_addon_mod.sh 18.0 oca/server-ux \
+RUN /usr/local/bin/fetch_addon_mod.sh 17.0 oca/server-ux \
       date_range
+
+# NOTE: oca/sale-workflow (sale_invoice_plan) was required in 18.0 but is NOT needed
+# in 17.0 — l10n_br_sale@17.0 dropped that dependency.
+#
+# NOTE: base_address_extended is a built-in Odoo 17.0 CE module (odoo/addons/) —
+# no OCA fetch required even though l10n_br_base lists it as a dependency.
 
 ##########################################################################################
 # Stage 2 (dev-only, testing phase): internal dependency check
 # Never built by default - Used to run after build to verify that all module dependencies
 # are satisfied.
 ##########################################################################################
-FROM odoo:18.0 AS deps-verification
+FROM odoo:17.0 AS deps-verification
 
 COPY --from=addons-fetch /addons /mnt/br-addons
 COPY scripts/verify_deps.py /verify_deps.py
@@ -51,9 +54,9 @@ COPY scripts/verify_deps.py /verify_deps.py
 RUN python3 /verify_deps.py
 
 ##########################################################################################
-# Stage 3: Odoo 18.0 + OCA Brazilian Localization
+# Stage 3: Odoo 17.0 + OCA Brazilian Localization
 ##########################################################################################
-FROM odoo:18.0
+FROM odoo:17.0
 
 USER root
 
