@@ -1,0 +1,23 @@
+# Brazilian Localization modules for Odoo 17.0
+# Format: <repo> <sha> [<module> ...]   (* or omitted = fetch all addons)
+# Update SHAs with: git ls-remote https://github.com/<repo>.git refs/heads/17.0
+
+oca/l10n-brazil               f2c72c930bcb5efc6f470ca33e39c717205c6409  *
+oca/account-payment           90d6887b5d6108c2069430ae1b3f0bcbffe478df  account_due_list account_due_list_payment_mode
+oca/bank-payment              ad54581dc726e4ef2de1d293f600ec5134ab7dac  account_payment_order account_payment_partner account_payment_mode
+oca/currency                  87c1e5410aaf39945e772d27db2a5cf0f103d3cc  currency_rate_update
+oca/hr                        2429f191a5946fece4c1329aa88053dcb4b550b3  hr_employee_relative
+oca/mis-builder               7d43c694d11275ab76d1bdb900b3dd16c1ef9dcd  mis_builder
+oca/product-attribute         b32c4e8a9c88f11e821919d4811c18e24e23e948  uom_alias
+oca/reporting-engine          4bf45b2a2f4bc1dea028e85600a9555dc6fa87c2  report_xlsx report_wkhtmltopdf_param
+oca/sale-workflow             7b765ddbeb8091c701ff2d7e2d8089bb54258395  sale_invoice_plan
+oca/server-ux                 d180004642780d9d415a15239aa64f309154b198  date_range base_technical_features
+oca/contract                  2952e282f7032574d6079895f5a4bf6f1e46fcc5  contract product_contract
+oca/purchase-workflow         7a843b25ceddaca75d81c36bfc5efd725f31beb0  purchase_request
+oca/account-invoicing         ea6ebd862b4ab02774d5169c0353bf4486476620  stock_picking_invoicing
+oca/stock-logistics-workflow  21f81a78d1319c9104b26746017a4c961725b943  stock_picking_invoice_link
+oca/server-tools              9404f977a601de79be680602334fb71dab6a054b  base_view_inheritance_extension base_sparse_field_list_support
+oca/hr-expense                67f2a5248fb579ec0e27dde8bcbe55897a5d0324  hr_expense_invoice
+oca/web                       74f924a9d6b53d8bfcee34bae910c9bc1166b06f  web_responsive web_theme_classic
+oca/account-financial-tools   7f2080c145aadaeba1d00e8770e16d006d059e6e  account_usability
+oca/account-reconcile         61172f200b08a2a64f941436dd48607e46ae3b7f  account_reconcile_oca account_reconcile_model_oca account_statement_base
