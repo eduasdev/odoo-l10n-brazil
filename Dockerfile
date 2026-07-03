@@ -2,7 +2,11 @@
 # Stage 1: fetch + flatten addons
 ##########################################################################################
 
-ARG ODOO_VERSION
+# Global ARG — available in all FROM lines. "invalid" silences the Docker parser
+# warning and ensures the build fails immediately if --build-arg ODOO_VERSION=x.y
+# is not passed instead of pulling a nonsensical image name.
+ARG ODOO_VERSION=invalid
+
 FROM alpine/git:2.54.0 AS addons-fetch
 
 ARG ODOO_VERSION
@@ -18,7 +22,6 @@ RUN /usr/local/bin/fetch_from_lockfile.sh "$ODOO_VERSION" /modules.lock
 # Never built by default — run after build to verify all module dependencies are satisfied
 ##########################################################################################
 
-ARG ODOO_VERSION
 FROM odoo:${ODOO_VERSION} AS deps-verification
 
 COPY --from=addons-fetch /addons /mnt/br-addons
@@ -29,7 +32,6 @@ RUN python3 /verify_deps.py
 # Stage 3: final image
 ##########################################################################################
 
-ARG ODOO_VERSION
 FROM odoo:${ODOO_VERSION}
 
 USER root
