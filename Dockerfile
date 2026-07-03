@@ -53,7 +53,8 @@ RUN if pip3 --help 2>&1 | grep -q break-system-packages; then \
     else \
       pip3 install --no-cache-dir --ignore-installed \
         -r /tmp/requirements.txt; \
-    fi && rm -f /tmp/requirements.txt
+    fi \
+    && rm -f /tmp/requirements.txt
 
 # Force a newer pyOpenSSL over the distro-packaged one to satisfy cryptography
 # version constraints pulled in transitively by some OCA modules
