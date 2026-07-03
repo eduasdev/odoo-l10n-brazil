@@ -4,17 +4,10 @@ name: Build and push odoo-l10n-brazil
 #   DOCKERHUB_USERNAME   - eduasdev
 #   DOCKERHUB_TOKEN      - Docker Hub access token (not your account password)
 #
-# Optional – only needed to auto-trigger a Dokploy redeploy after the push
-# (Dokploy's Docker Hub webhook only works for Application services, not
-# Compose, so for Compose stacks the API call below is the way to do it):
-#   DOKPLOY_DOMAIN       - e.g. dokploy.yourdomain.com (no scheme)
-#   DOKPLOY_API_TOKEN    - API token from your Dokploy profile settings
-#   DOKPLOY_COMPOSE_ID   - the composeId of the odoo-l10n-brazil service
-#
 # Branching convention (mirrors OCA's own l10n-brazil repo): the repo name
 # carries no version number. Each supported Odoo major version lives on its
-# own branch (18.0 today, 19.0 whenever that lands), and this workflow tags
-# the image after the branch it built from instead of a flat "latest".
+# own branch (18.0, 19.0, etc.), and this workflow tags the image after the
+# branch it built from.
 #
 # Build strategy: two parallel native-runner jobs (amd64 + arm64) each push
 # their image by digest, then a merge job assembles the multi-arch manifest.
@@ -22,12 +15,11 @@ name: Build and push odoo-l10n-brazil
 
 on:
   push:
-    branches: ["*.0"]  # 18.0, 19.0, etc.
+    branches: ["*.0"]  # 17.0, 18.0, etc.
     paths:
       - "Dockerfile"
       - "scripts/**"
       - "modules.lock"
-      - "VERSION"
   workflow_dispatch:
 
 env:
@@ -95,8 +87,6 @@ jobs:
     name: Merge manifests and push tags
     runs-on: ubuntu-latest
     needs: build
-    env:
-      DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
 
     steps:
       - name: Download all digests
@@ -122,11 +112,3 @@ jobs:
             --tag ${{ env.IMAGE }}:${{ github.ref_name }} \
             --tag ${{ env.IMAGE }}:${{ github.ref_name }}-${{ github.sha }} \
             $(printf '${{ env.IMAGE }}@sha256:%s ' *)
-
-      - name: Trigger Dokploy redeploy
-        if: env.DOKPLOY_API_TOKEN != ''
-        run: |
-          curl -fsS -X POST "https://${{ secrets.DOKPLOY_DOMAIN }}/api/compose.deploy" \
-            -H "x-api-key: ${{ secrets.DOKPLOY_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"composeId\": \"${{ secrets.DOKPLOY_COMPOSE_ID }}\"}"

@@ -45,8 +45,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Python dependencies declared by the fetched modules.
 # --ignore-installed: allows pip to shadow dpkg-owned packages with newer versions.
 COPY --from=addons-fetch /build/requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir --ignore-installed \
-      -r /tmp/requirements.txt \
+RUN if pip3 --help 2>&1 | grep -q break-system-packages; then \
+      pip3 install --no-cache-dir --ignore-installed --break-system-packages \
+        -r /tmp/requirements.txt; \
+    else \
+      pip3 install --no-cache-dir --ignore-installed \
+        -r /tmp/requirements.txt; \
+    fi \
     && rm -f /tmp/requirements.txt
 
 # Force a newer pyOpenSSL over the distro-packaged one to satisfy cryptography
