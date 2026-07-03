@@ -26,6 +26,8 @@ on:
     paths:
       - "Dockerfile"
       - "scripts/**"
+      - "modules.lock"
+      - "VERSION"
   workflow_dispatch:
 
 env:
@@ -69,6 +71,8 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
+          build-args: |
+            ODOO_VERSION=${{ github.ref_name }}
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=build-${{ env.PLATFORM_SLUG }}
           cache-to: type=gha,scope=build-${{ env.PLATFORM_SLUG }},mode=max

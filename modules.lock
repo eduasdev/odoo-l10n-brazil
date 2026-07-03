@@ -1,0 +1,14 @@
+# Brazilian Localization modules for Odoo 18.0
+# Format: <repo> <sha> [<module> ...]   (* or omitted = fetch all addons)
+# Update SHAs with: git ls-remote https://github.com/<repo>.git refs/heads/18.0
+
+oca/l10n-brazil           f68729bfcd85a4ca5c042ba4b65338a18e5fc3fc  *
+oca/account-payment       240e2386985791229afca5e26cc26ab74d47ea4c  account_due_list account_due_list_payment_mode
+oca/bank-payment          528c67c30422d91a42eef5d551acc404537ac307  account_payment_order account_payment_partner account_payment_mode
+oca/currency              30538a7d9507deb99447066ff4a25312f3b3e857  currency_rate_update
+oca/hr                    6af08091abf8959a15c2243041aff76e84e9fc98  hr_employee_relative
+oca/mis-builder           b9aa6376b3a0186623243a627be7b4731107c2ad  mis_builder
+oca/product-attribute     a66c17785d1766306bde2ffbbfe7aca4951cf7eb  uom_alias
+oca/reporting-engine      52e03a544f25b789ed34a0e842603ce0b80f36aa  report_xlsx
+oca/sale-workflow         a7138abcee95fc52e8f5393311ebe631b8b25ae5  sale_invoice_plan
+oca/server-ux             84e42a9b41b5689ca243ceaaec657653c5f351eb  date_range
