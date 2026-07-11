@@ -32,6 +32,44 @@ FROM odoo:${ODOO_VERSION}
 
 USER root
 
+# ICP-Brasil certificate chain - Brazilian government webservices (SEFAZ/NF-e, Receita
+# Federal, etc.) present TLS certificates issued under the ICP-Brasil PKI hierarchy.
+# This hierarchy is NOT part of the standard Mozilla/Debian ca-certificates bundle and
+# is not installed by any Linux distro by default.
+#
+# Source (official): ITI (Instituto Nacional de Tecnologia da Informação)
+# https://www.gov.br/iti/pt-br/assuntos/repositorio/certificados-das-acs-da-icp-brasil-arquivo-unico-compactado
+# "Cadeia Vigente" = current chain (root + all intermediate ACs, excludes expired/revoked).
+#
+# NOTE on the -k/--insecure flag below: acraiz.icpbrasil.gov.br serves this ZIP over
+# HTTPS with a certificate that is itself only verifiable once ICP-Brasil is already
+# trusted — a bootstrap problem. -k is deliberately scoped to this one download only;
+# every other HTTPS call in this image (including the actual NF-e transmission at
+# runtime) verifies normally once the chain below is installed.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl unzip openssl \
+    && update-ca-certificates \
+    && mkdir -p /tmp/icpbrasil \
+    && curl -k -fsS --max-time 60 -o /tmp/icpbrasil/ACcompactado.zip \
+      https://acraiz.icpbrasil.gov.br/credenciadas/CertificadosAC-ICP-Brasil/ACcompactado.zip \
+    && unzip -o -q /tmp/icpbrasil/ACcompactado.zip -d /tmp/icpbrasil/extraidos \
+    && find /tmp/icpbrasil/extraidos -type f | while read -r f; do \
+      name=$(basename "$f" | tr ' /' '__'); \
+      out="/usr/local/share/ca-certificates/icpb-${name}.crt"; \
+      openssl x509 -inform der -in "$f" -out "$out" 2>/dev/null \
+        || openssl x509 -inform pem -in "$f" -out "$out" 2>/dev/null \
+        || rm -f "$out"; \
+    done \
+    && update-ca-certificates \
+    && rm -rf /tmp/icpbrasil \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python's `requests`/`zeep` (used internally by erpbrasil.edoc/erpbrasil.transmissao)
+# do NOT use the OS trust store above by default — they use their own bundled CA file
+# via the `certifi` package, which does not include ICP-Brasil.
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
 # Bake the extra addons into the image (no separate addons volume needed)
 COPY --from=addons-fetch /addons /mnt/br-addons
 
