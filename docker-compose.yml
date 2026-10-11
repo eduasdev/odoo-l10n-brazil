@@ -11,6 +11,11 @@ services:
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ../files/odoo.conf:/etc/odoo/odoo.conf:ro
+      # Local addons, not baked into the image. Read-only: Odoo never needs
+      # to write here, and this keeps container-created __pycache__ out of
+      # the host directory. /mnt/extra-addons is already first in the
+      # addons_path (see odoo.conf.example).
+      - ../files/extra-addons:/mnt/extra-addons:ro
     restart: unless-stopped
 
   odoo-db:
